@@ -7,6 +7,13 @@
        - python-libvirt
        - python-lxml
 
+    guests:
+       - name: khchoksi4
+         mem: 512
+         vcpu: 1
+         network: "{{ network_name }}"
+    vm_disk_location: /var/lib/libvirt/images/
+
   tasks:
     # Install required packages
     - name: Install required packages for libvirt, lxml
@@ -21,13 +28,58 @@
         name: '{{ network_name }}'
         xml: '{{ lookup("template", "templates/bridge_template.xml.j2") }}'
 
-    # Start a network
-    - name: Start Virtual Network
+    # Create and start a network
+    - name: Create Virtual Network if not created
       virt_net:
-       command: create
+       command: stop
        name: "{{ network_name }}"
+      ignore_errors: true
+
+    # Stop a network
+    - name: Stop Virtual Network if running
+      virt_net:
+       command: stop
+       name: "{{ network_name }}"
+      ignore_errors: true	# To make task idempotent
 
     # List available networks
     - name: List available networks
       virt_net:
         command: list_nets
+
+    #Define new vm
+    #- name: Define new vm
+    #  virt:
+    #    name: "{{ item.name }}"
+    #    command: define
+    #    xml: "{{ lookup('template', 'templates/vm_template.xml.j2') }}"
+    #  become: yes
+    #  with_items: "{{ guests }}"
+    
+    # Start network
+    #- name: Start Virtual Network back if it is stopped
+    #  virt_net:
+    #     command: start
+    #     name: "{{ network_name  }}"
+    #  become: yes
+
+    # Start new vm
+    #- name: Start vm
+    #  virt:
+    #    name: "{{ item.name }}"
+    #    command: create
+    #  with_items: "{{ guests }}"
+    #  become: yes
+
+    - name: PWD Command
+      command: >
+                pwd
+      become: yes
+    
+    - name: Create VM disk
+      command: >
+                virt-install -n {{ item.name }} -r {{ item.mem }} --vcpu={{ item.vcpu }} --cpu host --disk path={{ vm_disk_location }}{{ item.name }}.img,size=5 --network network={{ network_name }} -c /home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso -v
+      become: yes
+      with_items: "{{ guests }}"
+
+     
