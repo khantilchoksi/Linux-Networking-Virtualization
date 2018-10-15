@@ -3,8 +3,18 @@
   vars:
     network_name: khchoksi-netl2
     bridge_name: sw2
+    packages:
+       - python-libvirt
+       - python-lxml
 
-  tasks:                
+  tasks:
+    # Install required packages
+    - name: Install required packages for libvirt, lxml
+      apt: 
+        name: "{{packages}}"
+      become: yes
+      become_method: sudo                
+    
     # Define a new network
     - name: Define Virtual Network
       virt_net:
@@ -13,10 +23,10 @@
         xml: '{{ lookup("template", "templates/bridge_template.xml.j2") }}'
 
     # Start a network
-    - name: Start Virtual Network
-      virt_net:
-        command: create
-        name: br_nat
+    #- name: Start Virtual Network
+    #  virt_net:
+    #   command: create
+    #   name: br_nat
 
     # List available networks
     - name: List available networks
