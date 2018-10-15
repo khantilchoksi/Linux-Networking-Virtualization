@@ -1,0 +1,24 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    network_name: khchoksi-netl2
+    bridge_name: sw2
+
+  tasks:                
+    # Define a new network
+    - name: Define Virtual Network
+      virt_net:
+        command: define
+        name: '{{ network_name }}'
+        xml: '{{ lookup("template", "templates/bridge_template.xml.j2") }}'
+
+    # Start a network
+    - name: Start Virtual Network
+      virt_net:
+        command: create
+        name: br_nat
+
+    # List available networks
+    - name: List available networks
+      virt_net:
+        command: list_nets

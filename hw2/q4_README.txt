@@ -1,0 +1,3 @@
+- Make sure to install Ansible on your host machine / VM.  
+- If not, install Ansible: `sudo apt-get install ansible` and check by `ansible --version`
+- 
