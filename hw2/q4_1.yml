@@ -13,7 +13,6 @@
       apt: 
         name: "{{packages}}"
       become: yes
-      become_method: sudo                
     
     # Define a new network
     - name: Define Virtual Network
@@ -23,10 +22,10 @@
         xml: '{{ lookup("template", "templates/bridge_template.xml.j2") }}'
 
     # Start a network
-    #- name: Start Virtual Network
-    #  virt_net:
-    #   command: create
-    #   name: br_nat
+    - name: Start Virtual Network
+      virt_net:
+       command: create
+       name: "{{ network_name }}"
 
     # List available networks
     - name: List available networks
