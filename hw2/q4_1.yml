@@ -1,3 +1,4 @@
+---
 - hosts: localhost
   gather_facts: no
   vars:
@@ -12,6 +13,11 @@
          mem: 512
          vcpu: 1
          network: "{{ network_name }}"
+       - name: khchoksi5
+         mem: 1024
+         vcpu: 2
+         network: "{{ network_name }}"
+    
     vm_disk_location: /var/lib/libvirt/images/
 
   tasks:
@@ -31,21 +37,34 @@
     # Create and start a network
     - name: Create Virtual Network if not created
       virt_net:
-       command: stop
+       command: create
        name: "{{ network_name }}"
       ignore_errors: true
 
     # Stop a network
-    - name: Stop Virtual Network if running
-      virt_net:
-       command: stop
-       name: "{{ network_name }}"
-      ignore_errors: true	# To make task idempotent
+    # - name: Stop Virtual Network if running
+    #   virt_net:
+    #    command: stop
+    #    name: "{{ network_name }}"
+    #   ignore_errors: true	# To make task idempotent
 
     # List available networks
     - name: List available networks
       virt_net:
         command: list_nets
+    
+    # Create New VM and will pop up UI
+    - name: Create VM instance
+      command: >
+                virt-install -n {{ item.name }} -r {{ item.mem }} --vcpu={{ item.vcpu }} --cpu host --disk path={{ vm_disk_location }}{{ item.name }}.img,size=5 --network network={{ network_name }} -c /home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso -v
+      become: yes
+      with_items: "{{ guests }}"
+
+    - name: Restart VM instances
+      virt:
+        command: shutdown
+      become: yes
+      with_items: "{{ guests }}"
 
     #Define new vm
     #- name: Define new vm
@@ -70,16 +89,5 @@
     #    command: create
     #  with_items: "{{ guests }}"
     #  become: yes
-
-    - name: PWD Command
-      command: >
-                pwd
-      become: yes
-    
-    - name: Create VM disk
-      command: >
-                virt-install -n {{ item.name }} -r {{ item.mem }} --vcpu={{ item.vcpu }} --cpu host --disk path={{ vm_disk_location }}{{ item.name }}.img,size=5 --network network={{ network_name }} -c /home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso -v
-      become: yes
-      with_items: "{{ guests }}"
 
      

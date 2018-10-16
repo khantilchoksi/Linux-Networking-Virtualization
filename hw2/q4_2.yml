@@ -1,0 +1,12 @@
+---
+- hosts: vms
+  gather_facts: no
+  vars:
+
+  tasks:
+    - name: Test the networks
+      shell: ifconfig
+      register: output
+
+    - debug:
+        var: output.stdout_lines
