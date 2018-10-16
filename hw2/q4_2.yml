@@ -43,10 +43,10 @@
       loop_control:
          pause: "{{ granularity }}"
     
-    - name: debuggging
-      debug: 
-         msg: "{{ item.stdout }}"
-      with_items: "{{ output.results }}"
+#    - name: debuggging
+#      debug: 
+#         msg: "{{ item.stdout }}"
+#      with_items: "{{ output.results }}"
     
     - name: Writing logs to csv file
       shell: |
