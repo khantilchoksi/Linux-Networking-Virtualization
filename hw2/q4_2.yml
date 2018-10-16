@@ -2,7 +2,7 @@
 - hosts: vms
   gather_facts: no
   vars:
-     total_time: "{{ total_time | default(5) }}"    # Defined total time if not passed from command line
+     total_time: "{{ time | default(5) }}"    # Defined total time if not passed from command line
      granularity: 60 #in seconds
      log_file_directory: /var/customlogs
      log_file_path: "{{ log_file_directory }}/logs.csv" 
@@ -15,12 +15,18 @@
         mode: 0777
         owner: ece792
         group: ece792
+      become: yes
+      delegate_to: localhost
+      run_once: true
 
     - name: Generate Log CSV File Header
       shell: echo "hostname, timestamp, cpu1min, cpu5min, cpu15min" >> "{{ log_file_path }}"
       delegate_to: localhost
       run_once: true
-    
+      become: yes
+      delegate_to: localhost
+      run_once: true
+
     - name: Generate loop sequence based on input total time parameter
       set_fact:
          loop_sequence: "{{ loop_sequence | default([]) + [item | int] }}"
@@ -35,16 +41,16 @@
       register: output
       loop: "{{ loop_sequence }}"
       loop_control:
-         pause: "{{ granularity | int }}"
+         pause: "{{ granularity }}"
     
-#    - name: debuggging
-#      debug: 
-#         msg: "{{ item.stdout }}"
-#      with_items: "{{ output.results }}"
+    - name: debuggging
+      debug: 
+         msg: "{{ item.stdout }}"
+      with_items: "{{ output.results }}"
     
     - name: Writing logs to csv file
       shell: |
              echo "{{ item.stdout }}" >> "{{ log_file_path }}"
       with_items: "{{ output.results }}"
       delegate_to: localhost
-
+      become: yes
