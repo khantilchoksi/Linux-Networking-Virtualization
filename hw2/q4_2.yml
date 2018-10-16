@@ -2,11 +2,49 @@
 - hosts: vms
   gather_facts: no
   vars:
-
+     total_time: "{{ total_time | default(5) }}"    # Defined total time if not passed from command line
+     granularity: 60 #in seconds
+     log_file_directory: /var/customlogs
+     log_file_path: "{{ log_file_directory }}/logs.csv" 
+  
   tasks:
-    - name: Test the networks
-      shell: ifconfig
-      register: output
+    - name: Create logs directory if not present
+      file:
+        path: "{{ log_file_directory }}"
+        state: directory
+        mode: 0777
+        owner: ece792
+        group: ece792
 
-    - debug:
-        var: output.stdout_lines
+    - name: Generate Log CSV File Header
+      shell: echo "hostname, timestamp, cpu1min, cpu5min, cpu15min" >> "{{ log_file_path }}"
+      delegate_to: localhost
+      run_once: true
+    
+    - name: Generate loop sequence based on input total time parameter
+      set_fact:
+         loop_sequence: "{{ loop_sequence | default([]) + [item | int] }}"
+      with_sequence: start=1 end={{ total_time }}
+    
+#    - name: debug_list
+#      debug:
+#         msg: "{{ loop_sequence }} "
+    
+    - name: Fetch cpu usages from host and gues, store it in output variable
+      shell: "echo -n '{{hostvars[inventory_hostname]['inventory_hostname']}},' && date +%X | awk -F, '{printf \" %s, \", $1}' && uptime | sed 's/.*load average: //' | awk -F\\, '{ printf \"%s, %s, %s\", $1, $2, $3}'"
+      register: output
+      loop: "{{ loop_sequence }}"
+      loop_control:
+         pause: "{{ granularity | int }}"
+    
+#    - name: debuggging
+#      debug: 
+#         msg: "{{ item.stdout }}"
+#      with_items: "{{ output.results }}"
+    
+    - name: Writing logs to csv file
+      shell: |
+             echo "{{ item.stdout }}" >> "{{ log_file_path }}"
+      with_items: "{{ output.results }}"
+      delegate_to: localhost
+

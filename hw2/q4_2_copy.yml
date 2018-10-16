@@ -1,0 +1,86 @@
+---
+- hosts: vms
+  gather_facts: no
+  vars:
+     total_time: "{{ total_time | default(5) }}"    # Defined total time if not passed from command line
+
+  tasks:
+    - name: Node Name
+      debug:
+         msg: "{{hostvars[inventory_hostname]['inventory_hostname']}}"
+
+    - name: Generate CSV File Header
+      shell: echo "hostname, cpu1min, cpu5min, cpu15min" >> ./mylog.csv
+      delegate_to: localhost
+      run_once: true
+    
+#    - name: Test loop
+#      debug:
+#         msg: "{{ item }}"
+#      loop:
+#         - 1
+#         - 2
+#         - 3
+#      loop_control:
+#         pause: 10
+#    - name: Generate Loop List
+#      set_fact:
+#         loop_list: "{{ range(1,5) | list }}"
+#    - name: debug_list
+#      debug:
+#         msg: "{{loop_list}}"
+
+    - name: Generate loop sequence based on input parameter
+      set_fact:
+         loop_sequence: "{{ loop_sequence | default([]) + [item | int] }}"
+      with_sequence: start=1 end={{total_time}}
+    
+    - name: debug_list
+      debug:
+         msg: "{{ loop_sequence }} "
+    
+    - name: Fetch cpu usages
+      shell: "echo -n '{{hostvars[inventory_hostname]['inventory_hostname']}},' && date +%X | awk -F, '{printf \" %s, \", $1}' && uptime | sed 's/.*load average: //' | awk -F\\, '{ printf \"%s, %s, %s\", $1, $2, $3}'"
+      register: output
+      loop: "{{ loop_sequence }}"
+      loop_control:
+         pause: 10
+    
+    - name: debuggging
+      debug: 
+         msg: "{{ item.stdout }}"
+      with_items: "{{ output.results }}"
+    
+    - name: Output to csv file
+      shell: |
+             echo "{{ item.stdout }}" >> ./mylog.csv
+      with_items: "{{ output.results }}"
+      delegate_to: localhost
+#    - name: Run fetch_times playbook
+#      include_tasks: fetch_times.yml
+#      loop:
+#         - 1
+#         - 2
+#         - 3
+#      loop_control:
+#         pause: 10
+#      async: 60
+#      poll: 0
+    #- name: CPU Load Average
+    #  shell: "uptime | sed 's/.*load average: //' | awk -F\\, '{ printf \"%s, %s, %s\", $1, $2, $3}'"
+    #  register: output
+
+    #- debug:
+    #    var: output.stdout_lines
+    # 
+    #- name: Insert statistics to CSV file
+    #  shell: | 
+    #      echo "{{hostvars[inventory_hostname]['inventory_hostname']}}, {{ output.stdout }}" >> ./mylog.csv
+    #  delegate_to: localhost
+
+    #- name: Run fetch_times playbook
+    #  include_tasks: fetch_times.yml
+    #  set_fact: total_time={{ total_time | int - 1 }}
+    #  until: total_time > 0
+    #  delay: 10
+    #  retries: 100

@@ -1,0 +1,16 @@
+---
+- name: CPU Load Average
+  shell: "uptime | sed 's/.*load average: //' | awk -F\\, '{ printf \"%s, %s, %s\", $1, $2, $3}'"
+  register: output
+
+- name: Time
+  shell: uptime | awk -F, '{print $1}'
+  register: output_time
+
+- debug:
+     var: output.stdout_lines
+
+- name: Insert statistics to CSV file
+  shell: |
+         echo "{{hostvars[inventory_hostname]['inventory_hostname']}}, {{output_time.stdout}}, {{ output.stdout }}" >> ./mylog.csv
+  delegate_to: localhost
