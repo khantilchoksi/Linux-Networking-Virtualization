@@ -19,6 +19,7 @@
          network: "{{ network_name }}"
     
     vm_disk_location: /var/lib/libvirt/images/
+    iso_file_path: {{ iso_file | default('/home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso') }}
 
   tasks:
     # Install required packages
@@ -56,16 +57,22 @@
     # Create New VM and will pop up UI
     - name: Create VM instance
       command: >
-                virt-install -n {{ item.name }} -r {{ item.mem }} --vcpu={{ item.vcpu }} --cpu host --disk path={{ vm_disk_location }}{{ item.name }}.img,size=5 --network network={{ network_name }} -c /home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso -v
+                virt-install -n {{ item.name }} -r {{ item.mem }} --vcpu={{ item.vcpu }} --cpu host --disk path={{ vm_disk_location }}{{ item.name }}.img,size=5 --network network={{ network_name }} -c {{ iso_file_path }} -v
       become: yes
       with_items: "{{ guests }}"
 
-    - name: Restart VM instances
-      virt:
-        command: shutdown
-      become: yes
-      with_items: "{{ guests }}"
+    # - name: Restart VM instances
+    #   virt:
+    #     command: shutdown
+    #   become: yes
+    #   with_items: "{{ guests }}"
 
+    # - name: Start VM instances
+    #   virt:
+    #     command: start
+    #   become: yes
+    #   with_items: "{{ guests }}"
+    #   ignore_errors: true
     #Define new vm
     #- name: Define new vm
     #  virt:
