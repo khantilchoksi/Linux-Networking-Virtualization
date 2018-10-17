@@ -24,8 +24,6 @@
       delegate_to: localhost
       run_once: true
       become: yes
-      delegate_to: localhost
-      run_once: true
 
     - name: Generate loop sequence based on input total time parameter
       set_fact:

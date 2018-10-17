@@ -96,5 +96,3 @@
     #    command: create
     #  with_items: "{{ guests }}"
     #  become: yes
-
-     
