@@ -1,0 +1,13 @@
+Q5_1
+$ python host_info.py
+
+Q5_2
+$ python guest_info.py
+
+Q5_3
+$ python monitory.py CPU --threshold=0.6
+
+usage: monitor.py [-h] [--threshold THRESHOLD]
+                  [--polling_interval POLLING_INTERVAL]
+                  [--moving_window MOVING_WINDOW]
+                  {CPU,MEM}
