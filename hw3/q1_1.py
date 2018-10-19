@@ -32,10 +32,10 @@ def list_macs(vm_list):
         # interfaceNodes = interface_types.childNodes
         # for interfaceNode in interfaceNodes
         for interface in interface_types:
-		    print('interface type: '+interface.getAttribute('type'))
-            # mac_tag = interface.getElementsByTagName('mac')
-            # mac_addresses = mac_tag.getAttribute('address')
-            # print('mac address: '+mac_addresses)
+            print('interface type: '+interface.getAttribute('type'))
+# mac_tag = interface.getElementsByTagName('mac')
+# mac_addresses = mac_tag.getAttribute('address')
+# print('mac address: '+mac_addresses)
 
 
 def list_ips():
