@@ -19,7 +19,7 @@
          network: "{{ network_name }}"
     
     vm_disk_location: /var/lib/libvirt/images/
-    iso_file_path: {{ iso_file | default('/home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso') }}
+    iso_file_path: "{{ iso_file | default('/home/ece792/iso/CentOS-7-x86_64-Minimal-1804.iso') }}"
 
   tasks:
     # Install required packages
