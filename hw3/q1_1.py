@@ -27,12 +27,12 @@ def list_vm_objects(conn):
 def list_macs(vm_list):
     for vm in vm_list:
         vm_xml = minidom.parseString(vm.XMLDesc(0))
-        interface_types = vm_xml.getElementyByTagsName('interface')
+        interface_types = vm_xml.getElementyByTagName('interface')
         print('interface type: '+interface_types.getAttribute('type'))
         # interfaceNodes = interface_types.childNodes
         # for interfaceNode in interfaceNodes
         for interface in interface_types:
-            mac_tag = interface.getElementyByTagsName('mac')
+            mac_tag = interface.getElementyByTagName('mac')
             mac_addresses = mac_tag.getAttribute('address')
             print('mac address: '+mac_addresses)
 
