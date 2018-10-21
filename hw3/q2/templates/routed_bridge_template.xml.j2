@@ -1,0 +1,11 @@
+<network>
+  <name>{{network_name}}</name>
+  <forward mode='route'/>
+  <bridge name='{{bridge_name}}' stp='on' delay='0'/>
+  <virtualport type='openvswitch'/>
+  <!-- ip address='{{ip_address}}' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='{{range_start}}' end='{{range_end}}'/>
+    </dhcp>
+  </ip --!>
+</network>
