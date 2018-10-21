@@ -85,6 +85,7 @@
       command: >
                virt-builder --format qcow2 centos-7.4
                -o '{{vm_disk_location}}/{{item.name}}.img' --size {{item.disk}}
+               -- install wireshark iperf3
                --root-password password:{{ root_pass }}
       when: item.name not in disks.stdout
       with_items: "{{ guests }}"
