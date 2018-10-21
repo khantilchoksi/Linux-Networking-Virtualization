@@ -1,0 +1,47 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    packages:
+       - python-libvirt
+       - python-lxml
+    networks:
+      internet1:
+        network_name: internet1
+        bridge_name: swovs1
+        template: templates/nat_bridge_template.xml.j2
+      l21:
+        network_name: l21
+        bridge_name: swovs2
+        template: templates/bridge_template.xml.j2
+      # l31:
+      #   network_name: l31
+      #   bridge_name: swovs3
+      #   template: templates/routed_bridge_template.xml.j2
+      # other1:
+      #   network_name: other1
+      #   bridge_name: swovs4
+      #   template: templates/routed_bridge_template.xml.j2
+    guests:
+       - name: khchoksi4
+         mem: 512
+         vcpu: 1
+         network: "{{ networks['internet1']['network_name'] }}"
+       - name: khchoksi5
+         mem: 512
+         vcpu: 1
+         network: "{{ networks['l21']['network_name'] }}"
+
+
+  tasks:
+     - debug:
+         msg: "{{guests}}"
+
+     # List of VMs
+     - name: Get list of VMs
+       virt:
+         command: "list_vms"
+       register: vms
+
+     - debug: 
+          msg: "{{vms}}"
