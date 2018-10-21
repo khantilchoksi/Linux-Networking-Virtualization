@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+    # Create an OVS type bridge
+    - name: Create OVS Bridge
+      openvswitch_bridge:
+         bridge: swovs10
+         state: present
+      become: yes
