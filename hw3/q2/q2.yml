@@ -29,13 +29,13 @@
        - name: khchoksi10
          mem: 512
          vcpu: 1
-         disk: 5
+         disk: 12G
          network1: "{{ networks['internet1']['network_name'] }}"
          network2: "{{ networks['l21']['network_name'] }}"
        - name: khchoksi11
          mem: 512
          vcpu: 1
-         disk: 5
+         disk: 12G
          network1: "{{ networks['internet1']['network_name'] }}"
          network2: "{{ networks['l21']['network_name'] }}"
 
@@ -43,7 +43,7 @@
     # Create an OVS type bridge
     - name: Create OVS Bridge
       openvswitch_bridge:
-         bridge: "{{item.bridge_name}}"
+         bridge: "{{item.value.bridge_name}}"
          state: present
       with_items: "{{ lookup('dict', networks) }}"
       ignore_errors: true
@@ -59,24 +59,23 @@
     - name: Define Virtual Network
       virt_net:
         command: define
-        name: '{{ item.network_name }}'
-        xml: "{{ lookup('template', 'item.template') }}"
-      with_items: "{{ lookup('dict', networks) }}"
+        name: "{{networks[item].network_name}}"
+        xml: "{{ lookup('template', '{{networks[item].template}}' ) }}"
+      with_items: "{{ networks | list }}"
       ignore_errors: true
-      become: yes
 
     # Create and start a network
     - name: Create Virtual Network if not created
       virt_net:
-       command: create
-       name: "{{ item.network_name }}"
+        command: create
+        name: "{{ networks[item].network_name }}"
+      with_items: "{{ networks | list }}"
       ignore_errors: true
-      with_items: "{{ lookup('dict', networks) }}"
       become: yes
     
     # Get List of VM Disks
-    - name: get VM disks
-      command: "ls {{ vm_location }}"
+    - name: Get list of VM disks
+      command: "ls {{ vm_disk_location }}"
       register: disks
       changed_when: "disks.rc != 0"
       become: yes
@@ -85,10 +84,10 @@
     - name: Create VM disk
       command: >
                virt-builder --format qcow2 centos-7.4
-               -o {{ vm_location}}/{{ item.name }}.img
+               -o '{{vm_disk_location}}/{{item.name}}.img' --size {{item.disk}}
                --root-password password:{{ root_pass }}
       when: item.name not in disks.stdout
-      with_dict: "{{ guests }}"
+      with_items: "{{ guests }}"
       become: yes
 
     # List of VMs

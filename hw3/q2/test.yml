@@ -1,0 +1,44 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    packages:
+       - python-libvirt
+       - python-lxml
+    networks:
+      l211:
+        network_name: l211
+        bridge_name: swovs2
+        template: templates/bridge_template.xml.j2
+    guests:
+       - name: khchoksi5
+         mem: 512
+         vcpu: 1
+         network: "{{ networks['l211']['network_name'] }}"
+
+
+  tasks:
+     - debug:
+         msg: "{{guests}}"
+
+     # List of VMs
+     - name: Get list of VMs
+       virt:
+         command: "list_vms"
+       register: vms
+
+     - debug: 
+          msg: "{{vms}}"
+
+     - debug:
+          msg: "{{networks[item].network_name}}"
+       with_items: " {{ networks | list }}"
+
+     # Define a new network
+     - name: Define Virtual Network
+       virt_net:
+         command: define
+         name: "{{networks[item].network_name}}"
+         xml: "{{ lookup('template', '{{networks[item].template}}' ) }}"
+       with_items: "{{ networks | list }}"
+       ignore_errors: true
