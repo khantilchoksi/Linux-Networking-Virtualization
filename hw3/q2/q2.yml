@@ -7,52 +7,24 @@
        - python-lxml
     vm_disk_location: /var/lib/libvirt/images
     root_pass: root
-    # Networks dictionary
-    networks:
-      internet1:
-        network_name: internet1
-        bridge_name: swovs3
-        template: templates/nat_bridge_template.xml.j2
-      l21:
-        network_name: l21
-        bridge_name: swovs2
-        template: templates/bridge_template.xml.j2
-      # l31:
-      #   network_name: l31
-      #   bridge_name: swovs3
-      #   template: templates/routed_bridge_template.xml.j2
-      # other1:
-      #   network_name: other1
-      #   bridge_name: swovs4
-      #   template: templates/routed_bridge_template.xml.j2
-    guests:
-       - name: khchoksi10
-         mem: 512
-         vcpu: 1
-         disk: 12G
-         network1: "{{ networks['internet1']['network_name'] }}"
-         network2: "{{ networks['l21']['network_name'] }}"
-#       - name: khchoksi11
-#         mem: 512
-#         vcpu: 1
-#         disk: 12G
-#         network1: "{{ networks['internet1']['network_name'] }}"
-#         network2: "{{ networks['l21']['network_name'] }}"
+    vars_files:
+      - networks_vars.yml
+      - guests_vars.yml
 
   tasks:
-    # Create an OVS type bridge
-    # - name: Create OVS Bridge
-    #  openvswitch_bridge:
-    #     bridge: "{{item.value.bridge_name}}"
-    #     state: present
-    #  with_items: "{{ lookup('dict', networks) }}"
-    #  ignore_errors: true
-    #  become: yes
-
     # Install required packages
     - name: Install required packages for libvirt, lxml
       apt: 
         name: "{{packages}}"
+      become: yes
+
+    # Create an OVS type bridge
+    - name: Create OVS Bridge
+      openvswitch_bridge:
+          bridge: "{{item.value.bridge_name}}"
+          state: present
+      with_items: "{{ lookup('dict', networks) }}"
+      ignore_errors: true
       become: yes
     
     # Define a new network
@@ -72,64 +44,61 @@
       with_items: "{{ networks | list }}"
       ignore_errors: true
       become: yes
-
-    # Start network
-    - name: Start Virtual Network back if it is stopped
-      virt_net:
-         command: start
-         name: "{{ networks[item].network_name }}"
+    
+    # Set interface bridge up
+    - name: Set Interface of bridges up
+      command: "sudo ifconfig {{networks[item].bridge_name}} up"
       with_items: "{{ networks | list }}"
       ignore_errors: true
       become: yes
 
-    # Create an OVS type bridge
-    - name: Create OVS Bridge
-      openvswitch_bridge:
-         bridge: "{{item.value.bridge_name}}"
-         state: present
-      with_items: "{{ lookup('dict', networks) }}"
+    # Assign IP if bridge is routed or nat/dhcp mode, and this will also make entry in route table
+    - name: Make the bridge in routed mode
+      command: "sudo ifconfig {{networks[item].bridge_name}} {{networks[item].ip_address}} "
+      with_items: "{{ networks | list }}"
+      when: networks[item].ip_address != 'bridge'
       ignore_errors: true
       become: yes
     
-    # Get List of VM Disks
-    - name: Get list of VM disks
-      command: "ls {{ vm_disk_location }}"
-      register: disks
-      changed_when: "disks.rc != 0"
-      become: yes
+    # # Get List of VM Disks
+    # - name: Get list of VM disks
+    #   command: "ls {{ vm_disk_location }}"
+    #   register: disks
+    #   changed_when: "disks.rc != 0"
+    #   become: yes
   
-    #Create VM Disks
-    - name: Create VM disk
-      command: >
-               virt-builder --format qcow2 centos-7.4
-               -o '{{vm_disk_location}}/{{item.name}}.img' --size {{item.disk}}
-               -- install wireshark iperf3
-               --root-password password:{{ root_pass }}
-      when: item.name not in disks.stdout
-      with_items: "{{ guests }}"
-      become: yes
+    # #Create VM Disks
+    # - name: Create VM disk
+    #   command: >
+    #            virt-builder --format qcow2 centos-7.4
+    #            -o '{{vm_disk_location}}/{{item.name}}.img' --size {{item.disk}}
+    #            --install wireshark iperf3
+    #            --root-password password:{{ root_pass }}
+    #   when: item.name not in disks.stdout
+    #   with_items: "{{ guests }}"
+    #   become: yes
 
-    # List of VMs
-    - name: Get list of VMs
-      virt:
-        command: "list_vms"
-      register: vms
+    # # List of VMs
+    # - name: Get list of VMs
+    #   virt:
+    #     command: "list_vms"
+    #   register: vms
 
-    #Define new vm
-    - name: Define new vm
-      virt:
-        name: "{{ item.name }}"
-        command: define
-        xml: "{{ lookup('template', 'templates/vm_template.xml.j2') }}"
-      when: item.name not in vms.list_vms
-      with_items: "{{ guests }}"
-      become: yes
+    # #Define new vm
+    # - name: Define new vm
+    #   virt:
+    #     name: "{{ item.name }}"
+    #     command: define
+    #     xml: "{{ lookup('template', 'templates/vm_template.xml.j2') }}"
+    #   when: item.name not in vms.list_vms
+    #   with_items: "{{ guests }}"
+    #   become: yes
 
-    # Create and start new vm
-    - name: Start vm
-      virt:
-        name: "{{ item.name }}"
-        command: create
-      with_items: "{{ guests }}"
-      become: yes
+    # # Create and start new vm
+    # - name: Start vm
+    #   virt:
+    #     name: "{{ item.name }}"
+    #     command: create
+    #   with_items: "{{ guests }}"
+    #   become: yes
     
