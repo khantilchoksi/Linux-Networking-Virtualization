@@ -2,22 +2,20 @@
 networks:
   # internet1:
   #   network_name: internet1
-  #   bridge_name: swovs3
-  #   template: templates/nat_bridge_template.xml.j2
+  #   bridge_name: q3ovs1
   #   bridge_type: nat/dhcp
+  #   ip_address: 106.0.0.0/24
   # l21:
   #   network_name: l21
-  #   bridge_name: swovs2
-  #   template: templates/bridge_template.xml.j2
+  #   bridge_name: q3ovs2
   #   bridge_type: bridge
   l31:
     network_name: l31
-    bridge_name: q3swovs3
-    template: templates/bridge_template.xml.j2
+    bridge_name: q3ovs3
     bridge_type: routed
     ip_address: 107.0.0.0/24
   # other1:
   #   network_name: other1
-  #   bridge_name: swovs4
-  #   template: templates/routed_bridge_template.xml.j2
+  #   bridge_name: q3ovs4
   #   bridge_type: routed
+  #   ip_address: 108.0.0.0/24
