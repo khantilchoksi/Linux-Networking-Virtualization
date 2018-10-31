@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    networks:
+       l31:
+          network_name: l31
+          bridge_name: l25
+  tasks:
+     - name: Create OVS Bridge
+       command: "sudo ifconfig {{networks[item].bridge_name}} up"
+       with_items: "{{ networks | list }}"
+       ignore_errors: true
+       become: yes
