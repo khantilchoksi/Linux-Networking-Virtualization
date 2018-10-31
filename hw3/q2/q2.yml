@@ -26,6 +26,13 @@
       with_items: "{{ lookup('dict', networks) }}"
       ignore_errors: true
       become: yes
+
+    # Set interface bridge up
+    - name: Set Interface of bridges up
+      command: "sudo ifconfig {{networks[item].bridge_name}} up"
+      with_items: "{{ networks | list }}"
+      ignore_errors: true
+      become: yes
     
     # Define a new network
     - name: Define Virtual Network
@@ -44,13 +51,7 @@
       with_items: "{{ networks | list }}"
       ignore_errors: true
       become: yes
-    
-    # Set interface bridge up
-    - name: Set Interface of bridges up
-      command: "sudo ifconfig {{networks[item].bridge_name}} up"
-      with_items: "{{ networks | list }}"
-      ignore_errors: true
-      become: yes
+  
 
     # Assign IP if bridge is routed or nat/dhcp mode, and this will also make entry in route table
     - name: Make the bridge in routed mode
