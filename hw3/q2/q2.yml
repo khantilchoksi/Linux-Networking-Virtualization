@@ -12,8 +12,14 @@
       - guests_vars.yml
 
   tasks:
+    # List networks defined
     - debug:
          msg: "{{networks}}"
+    
+    # List guests defined
+    - debug:
+         msg: "{{guests}}"
+
     # Install required packages
     - name: Install required packages for libvirt, lxml
       apt: 
