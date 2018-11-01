@@ -5,6 +5,7 @@
     packages:
        - python-libvirt
        - python-lxml
+       - dnsmasq
     vm_disk_location: /var/lib/libvirt/images
     root_pass: root
   vars_files:
@@ -12,14 +13,8 @@
       - guests_vars.yml
 
   tasks:
-    # List networks defined
     - debug:
          msg: "{{networks}}"
-    
-    # List guests defined
-    - debug:
-         msg: "{{guests}}"
-
     # Install required packages
     - name: Install required packages for libvirt, lxml
       apt: 
@@ -47,7 +42,7 @@
       virt_net:
         command: define
         name: "{{networks[item].network_name}}"
-        xml: "{{ lookup('template', '{{networks[item].template}}' ) }}"
+        xml: "{{ lookup('template', 'templates/bridge_template.xml.j2' ) }}"
       with_items: "{{ networks | list }}"
       ignore_errors: true
 
@@ -65,7 +60,23 @@
     - name: Make the bridge in routed mode
       command: "sudo ifconfig {{networks[item].bridge_name}} {{networks[item].ip_address}} "
       with_items: "{{ networks | list }}"
-      when: networks[item].ip_address != 'bridge'
+      when: networks[item].bridge_type != 'bridge'
+      ignore_errors: true
+      become: yes
+
+    # Provide  DHCP and DNS 
+    - name: Make the bridge in dhcp mode
+      command: "sudo dnsmasq --interface={{networks[item].bridge_name}} --except-interface=lo --bind-interfaces --dhcp-range={{networks[item].dhcp_range}}"
+      with_items: "{{ networks | list }}"
+      when: networks[item].bridge_type == 'nat/dhcp'
+      ignore_errors: true
+      become: yes
+
+    # Provide bridge NAT functionality at hyperviosr
+    - name: Make the bridge in nat mode
+      command: "sudo iptables -t nat -A POSTROUTING -s {{networks[item].subnet_address}} -j MASQUERADE" 
+      with_items: "{{ networks | list }}"
+      when: networks[item].bridge_type == 'nat/dhcp'
       ignore_errors: true
       become: yes
     
