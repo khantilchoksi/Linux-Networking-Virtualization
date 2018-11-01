@@ -1,0 +1,22 @@
+---
+- hosts: hypervisors
+  gather_facts: no
+  vars:
+    packages:
+       - python-libvirt
+       - python-lxml
+       - dnsmasq
+    vm_disk_location: /var/lib/libvirt/images
+    root_pass: root
+  vars_files:
+      - networks_vars.yml
+      - guests_vars.yml
+
+  tasks:
+    - debug:
+         msg: "{{networks}}"
+    # Install required packages
+    - name: Install required packages for libvirt, lxml
+      apt: 
+        name: "{{packages}}"
+      become: yes
