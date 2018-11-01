@@ -80,45 +80,45 @@
       ignore_errors: true
       become: yes
     
-    # # Get List of VM Disks
-    # - name: Get list of VM disks
-    #   command: "ls {{ vm_disk_location }}"
-    #   register: disks
-    #   changed_when: "disks.rc != 0"
-    #   become: yes
+    # Get List of VM Disks
+    - name: Get list of VM disks
+      command: "ls {{ vm_disk_location }}"
+      register: disks
+      changed_when: "disks.rc != 0"
+      become: yes
   
-    # #Create VM Disks
-    # - name: Create VM disk
-    #   command: >
-    #            virt-builder --format qcow2 centos-7.4
-    #            -o '{{vm_disk_location}}/{{item.name}}.img' --size {{item.disk}}
-    #            --install wireshark iperf3
-    #            --root-password password:{{ root_pass }}
-    #   when: item.name not in disks.stdout
-    #   with_items: "{{ guests }}"
-    #   become: yes
+    #Create VM Disks
+    - name: Create VM disk
+      command: >
+               virt-builder --format qcow2 centos-7.4
+               -o '{{vm_disk_location}}/{{item.name}}.img' --size {{item.disk}}
+               --install wireshark iperf3
+               --root-password password:{{ root_pass }}
+      when: item.name not in disks.stdout
+      with_items: "{{ guests }}"
+      become: yes
 
-    # # List of VMs
-    # - name: Get list of VMs
-    #   virt:
-    #     command: "list_vms"
-    #   register: vms
+    # List of VMs
+    - name: Get list of VMs
+      virt:
+        command: "list_vms"
+      register: vms
 
-    # #Define new vm
-    # - name: Define new vm
-    #   virt:
-    #     name: "{{ item.name }}"
-    #     command: define
-    #     xml: "{{ lookup('template', 'templates/vm_template.xml.j2') }}"
-    #   when: item.name not in vms.list_vms
-    #   with_items: "{{ guests }}"
-    #   become: yes
+    #Define new vm
+    - name: Define new vm
+      virt:
+        name: "{{ item.name }}"
+        command: define
+        xml: "{{ lookup('template', 'templates/vm_template.xml.j2') }}"
+      when: item.name not in vms.list_vms
+      with_items: "{{ guests }}"
+      become: yes
 
-    # # Create and start new vm
-    # - name: Start vm
-    #   virt:
-    #     name: "{{ item.name }}"
-    #     command: create
-    #   with_items: "{{ guests }}"
-    #   become: yes
+    # Create and start new vm
+    - name: Start vm
+      virt:
+        name: "{{ item.name }}"
+        command: create
+      with_items: "{{ guests }}"
+      become: yes
     
