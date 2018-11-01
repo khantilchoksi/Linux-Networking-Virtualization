@@ -1,21 +1,23 @@
 ---
 networks:
-  # internet1:
-  #   network_name: internet1
-  #   bridge_name: q3ovs1
-  #   bridge_type: nat/dhcp
-  #   ip_address: 106.0.0.0/24
+  internet1:
+     network_name: internet1
+     bridge_name: q3ovs1
+     bridge_type: nat/dhcp
+     ip_address: 106.0.0.1/24
+     dhcp_range: 106.0.0.2,106.0.0.254,12h
+     subnet_address: 106.0.0.0/24
   # l21:
   #   network_name: l21
   #   bridge_name: q3ovs2
   #   bridge_type: bridge
-  l31:
-    network_name: l31
-    bridge_name: q3ovs3
-    bridge_type: routed
-    ip_address: 107.0.0.0/24
+  # l31:
+  #  network_name: l31
+  #  bridge_name: q3ovs3
+  #  bridge_type: routed
+  #  ip_address: 107.0.0.1/24
   # other1:
   #   network_name: other1
   #   bridge_name: q3ovs4
   #   bridge_type: routed
-  #   ip_address: 108.0.0.0/24
+  #   ip_address: 108.0.0.1/24
