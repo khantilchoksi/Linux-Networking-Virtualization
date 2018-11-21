@@ -1,0 +1,14 @@
+---
+guests:
+    - name: khchoksi10
+      mem: 512
+      vcpu: 1
+      disk: 12G
+      network1: "{{ networks['internet1']['network_name'] }}"
+      network2: "{{ networks['l21']['network_name'] }}"
+    - name: khchoksi11
+      mem: 512
+      vcpu: 1
+      disk: 12G
+      network1: "{{ networks['internet1']['network_name'] }}"
+      network2: "{{ networks['l21']['network_name'] }}"

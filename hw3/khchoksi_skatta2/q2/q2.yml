@@ -1,0 +1,126 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    packages:
+       - python-libvirt
+       - python-lxml
+    vm_disk_location: /var/lib/libvirt/images
+    root_pass: root
+  vars_files:
+      - networks_vars.yml
+      - guests_vars.yml
+
+  tasks:
+    - debug:
+         msg: "{{networks}}"
+    
+    - debug:
+         msg: "{{guests}}"
+    # Install required packages
+#    - name: Install required packages for libvirt, lxml
+#      apt: 
+#        name: "{{packages}}"
+#      become: yes
+
+    # Create an OVS type bridge
+    - name: Create OVS Bridge
+      openvswitch_bridge:
+          bridge: "{{networks[item].bridge_name}}"
+          state: present
+      with_items: "{{ networks | list }}"
+      ignore_errors: true
+      become: yes
+
+    # Set interface bridge up
+    - name: Set Interface of bridges up
+      command: "sudo ifconfig {{networks[item].bridge_name}} up"
+      with_items: "{{ networks | list }}"
+      ignore_errors: true
+      become: yes
+    
+    # Define a new network
+    - name: Define Virtual Network
+      virt_net:
+        command: define
+        name: "{{networks[item].network_name}}"
+        xml: "{{ lookup('template', 'templates/bridge_template.xml.j2' ) }}"
+      with_items: "{{ networks | list }}"
+      ignore_errors: true
+
+    # Create and start a network
+    - name: Create Virtual Network if not created
+      virt_net:
+        command: create
+        name: "{{ networks[item].network_name }}"
+      with_items: "{{ networks | list }}"
+      ignore_errors: true
+      become: yes
+  
+
+    # Assign IP if bridge is routed or nat/dhcp mode, and this will also make entry in route table
+    - name: Make the bridge in routed mode
+      command: "sudo ifconfig {{networks[item].bridge_name}} {{networks[item].ip_address}} "
+      with_items: "{{ networks | list }}"
+      when: networks[item].bridge_type != 'bridge'
+      ignore_errors: true
+      become: yes
+
+    # Provide  DHCP and DNS 
+    - name: Make the bridge in dhcp mode
+      command: "sudo dnsmasq --interface={{networks[item].bridge_name}} --except-interface=lo --bind-interfaces --dhcp-range={{networks[item].dhcp_range}}"
+      with_items: "{{ networks | list }}"
+      when: networks[item].bridge_type == 'nat/dhcp'
+      ignore_errors: true
+      become: yes
+
+    # Provide bridge NAT functionality at hyperviosr
+    - name: Make the bridge in nat mode
+      command: "sudo iptables -t nat -A POSTROUTING -s {{networks[item].subnet_address}} -j MASQUERADE" 
+      with_items: "{{ networks | list }}"
+      when: networks[item].bridge_type == 'nat/dhcp'
+      ignore_errors: true
+      become: yes
+    
+    # Get List of VM Disks
+    - name: Get list of VM disks
+      command: "ls {{ vm_disk_location }}"
+      register: disks
+      changed_when: "disks.rc != 0"
+      become: yes
+  
+    #Create VM Disks
+    - name: Create VM disk
+      command: >
+               virt-builder --format qcow2 centos-7.4
+               -o '{{vm_disk_location}}/{{item.name}}.img' --size '{{item.disk}}'
+               --install wireshark,iperf3
+               --root-password password:{{ root_pass }}
+      when: item.name not in disks.stdout
+      with_items: "{{ guests }}"
+      become: yes
+
+    # List of VMs
+    - name: Get list of VMs
+      virt:
+        command: "list_vms"
+      register: vms
+
+    #Define new vm
+    - name: Define new vm
+      virt:
+        name: "{{ item.name }}"
+        command: define
+        xml: "{{ lookup('template', 'templates/vm_template.xml.j2') }}"
+      when: item.name not in vms.list_vms
+      with_items: "{{ guests }}"
+      become: yes
+
+    # Create and start new vm
+    - name: Start vm
+      virt:
+        name: "{{ item.name }}"
+        command: create
+      with_items: "{{ guests }}"
+      become: yes
+    
