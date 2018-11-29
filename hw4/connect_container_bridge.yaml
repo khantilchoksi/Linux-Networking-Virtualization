@@ -30,20 +30,20 @@
 
   # Fetch container process ID
   - name: Fetch container process ID
-    command: "docker inspect --format '{{.State.Pid}}' {{container_name}}"
+    command: "docker inspect --format {%raw%}'{{.State.Pid}}'{%endraw%} {{container_name}}"
     register: container_pid
 
   # Attach vif1 to container
   - name: Attach brvif1 to container
-    command: "ip link set netns {{container_pid}} dev {{interface_prefix}}vif1"
+    command: "ip link set netns {{container_pid.stdout}} dev {{interface_prefix}}vif1"
     become: yes
 
   # Make the container interface running 
   - name: Make the interface running 
-    command: "nsenter -t {{container_pid}} -n ip link set {{interface_prefix}}vif1 up"
+    command: "nsenter -t {{container_pid.stdout}} -n ip link set {{interface_prefix}}vif1 up"
     become: yes
 
   # Assign ip to LC1 container interface
   - name: Attach brvif1 to container
-    command: "nsenter -t {{container_pid}} -n ip addr add {{interface_ip}} dev {{interface_prefix}}vif1"
+    command: "nsenter -t {{container_pid.stdout}} -n ip addr add {{interface_ip}} dev {{interface_prefix}}vif1"
     become: yes

@@ -60,7 +60,7 @@
     - name: Connect LC1 with bridge
       include_tasks: connect_container_bridge.yaml
       vars:
-        container_name: lc1
+        container_name: lc11
         bridge_name: "{{item.container1}}br"
         interface_ip: "{{lc1_ip}}"
       with_items: "{{csv_file}}"
