@@ -9,6 +9,9 @@
       - container1: cs10
         container2: cs11
         network_type: bridge
+        lc1_ip: 101.0.1.1/24
+        container1_ip: 101.0.1.2/24
+        container2_ip: 101.0.1.3/24
 
   tasks:
     # Install required packages
@@ -50,8 +53,79 @@
     # Create Bridge inside hypervisor
     - name: Create bridge in hypervisor
       command: "brctl addbr {{item.container1}}{{item.container2}}br"
+      with_items: "{{csv_file}}"
+      become: yes
+    
+    # Connect LC1 with bridge
+    - name: Connect LC1 with bridge
+      include_tasks: connect_container_bridge.yaml
+      vars:
+        container_name: lc1
+        bridge_name: "{{item.container1}}{{item.container2}}br"
+        interface_ip: "{{lc1_ip}}"
+      with_items: "{{csv_file}}"
 
-    # 
+    # Connect Container1 with bridge
+    - name: Connect Container1 with bridge
+      include_tasks: connect_container_bridge.yaml
+      vars:
+        container_name: "{{container1}}"
+        bridge_name: "{{item.container1}}{{item.container2}}br"
+        interface_ip: "{{container1_ip}}"
+      with_items: "{{csv_file}}"
+
+    # Connect Container2 with bridge
+    - name: Connect Container2 with bridge
+      include_tasks: connect_container_bridge.yaml
+      vars:
+        container_name: "{{container2}}"
+        bridge_name: "{{item.container1}}{{item.container2}}br"
+        interface_ip: "{{container2_ip}}"
+      with_items: "{{csv_file}}"
+
+    # # Create veth pair for bridge and LC1
+    # - name: Create veth pair for bridge and LC1
+    #   command: "ip link add {{item.container1}}{{item.container2}}brvif1 type veth peer name {{item.container1}}{{item.container2}}brvif2"
+    #   with_items: "{{csv_file}}"
+
+    # # Attach brvif2 to bridge
+    # - name: Attach brvif2 to bridge
+    #   command: "brctl addif {{item.container1}}{{item.container2}}br {{item.container1}}{{item.container2}}brvif2"
+    #   become: yes
+
+    # # Make the bridge interface up
+    # - name: Make the bridge interface up
+    #   command: "ifconfig {{item.container1}}{{item.container2}}br up"
+    #   become: yes
+
+    # # Make the brvif2 up
+    # - name: Make the brvif2 up
+    #   command: "ifconfig {{item.container1}}{{item.container2}}brvif2 up"
+    #   become: yes
+
+    # # Fetch LC1 process ID
+    # - name: Fetch LC1 process ID
+    #   command: docker inspect --format '{{.State.Pid}}' lc11
+    #   register: lc1_pid
+
+    # # Attach brvif1 to container
+    # - name: Attach brvif1 to container
+    #   command: "ip link set netns {{lc1_pid}} dev {{item.container1}}{{item.container2}}brvif1"
+    #   become: yes
+    #   with_items: "{{csv_file}}"
+
+    # # Make the container interface running 
+    # - name: Make the interface running 
+    #   command: "nsenter -t {{lc1_pid}} -n ip link set {{item.container1}}{{item.container2}}brvif1 up"
+    #   become: yes
+    #   with_items: "{{csv_file}}"
+
+    # # Assign ip to LC1 container interface
+    # - name: Attach brvif1 to container
+    #   command: "udo nsenter -t {{lc1_pid}} -n ip addr add {{item.lc1_ip}} dev {{item.container1}}{{item.container2}}brvif1"
+    #   become: yes
+    #   with_items: "{{csv_file}}"
+
 
     
     
