@@ -2,6 +2,8 @@
 - hosts: localhost
   gather_facts: no
   vars:
+    packages:
+       - docker
     docker_image: ubuntu_netw
     csv_file: 
       - container1: cs10
@@ -9,8 +11,21 @@
         network_type: bridge
 
   tasks:
+    # Install required packages
+    - name: Install required packages for docker
+      apt: 
+        name: "{{packages}}"
+      become: yes
+
     - debug:
          msg: "{{csv_file}}"
+
+    # Create docker image if not exists
+    - name: Create docker image if not exists
+      docker_image:
+        path: .
+        name: "{{docker_image}}"
+        state: present
 
     # Create container1
     - name: Create and start container 1 if already not present
@@ -19,20 +34,24 @@
         image: "{{docker_image}}"
         state: present
         privileged: yes
+        command: sleep infinity
       with_items: "{{csv_file}}"
 
-    # Create container1
+    # Create container2
     - name: Create and start container 2 if already not present
       docker_container:
         name: "{{item.container2}}"
         image: "{{docker_image}}"
         state: present
         privileged: yes
+        command: sleep infinity
       with_items: "{{csv_file}}"
 
     # Create Bridge inside hypervisor
     - name: Create bridge in hypervisor
-      command: "echo {{item.container1}} {{item.container2}}"
+      command: "brctl addbr {{item.container1}}{{item.container2}}br"
+
+    # 
 
     
     
