@@ -12,11 +12,13 @@
   # Create veth pair for bridge and container
   - name: Create veth pair for bridge and container
     command: "ip link add {{interface_prefix}}vif1 type veth peer name {{interface_prefix}}vif2"
+    ignore_errors: true
 
   # Attach brvif2 to bridge
   - name: Attach brvif2 to bridge
     command: "brctl addif {{bridge_name}} {{interface_prefix}}vif2"
     become: yes
+    ignore_errors: true
 
   # Make the bridge interface up
   - name: Make the bridge interface up
@@ -37,6 +39,7 @@
   - name: Attach brvif1 to container
     command: "ip link set netns {{container_pid.stdout}} dev {{interface_prefix}}vif1"
     become: yes
+    ignore_errors: true
 
   # Make the container interface running 
   - name: Make the interface running 
@@ -47,3 +50,4 @@
   - name: Attach brvif1 to container
     command: "nsenter -t {{container_pid.stdout}} -n ip addr add {{interface_ip}} dev {{interface_prefix}}vif1"
     become: yes
+    ignore_errors: true

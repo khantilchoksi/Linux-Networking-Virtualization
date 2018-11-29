@@ -35,7 +35,7 @@
       docker_container:
         name: "{{item.container1}}"
         image: "{{docker_image}}"
-        state: present
+        state: started
         privileged: yes
         command: sleep infinity
       with_items: "{{csv_file}}"
@@ -45,7 +45,7 @@
       docker_container:
         name: "{{item.container2}}"
         image: "{{docker_image}}"
-        state: present
+        state: started
         privileged: yes
         command: sleep infinity
       with_items: "{{csv_file}}"
@@ -62,25 +62,25 @@
       vars:
         container_name: lc11
         bridge_name: "{{item.container1}}br"
-        interface_ip: "{{lc1_ip}}"
+        interface_ip: "{{item.lc1_ip}}"
       with_items: "{{csv_file}}"
 
     # Connect Container1 with bridge
     - name: Connect Container1 with bridge
       include_tasks: connect_container_bridge.yaml
       vars:
-        container_name: "{{container1}}"
+        container_name: "{{item.container1}}"
         bridge_name: "{{item.container1}}br"
-        interface_ip: "{{container1_ip}}"
+        interface_ip: "{{item.container1_ip}}"
       with_items: "{{csv_file}}"
 
     # Connect Container2 with bridge
     - name: Connect Container2 with bridge
       include_tasks: connect_container_bridge.yaml
       vars:
-        container_name: "{{container2}}"
+        container_name: "{{item.container2}}"
         bridge_name: "{{item.container1}}br"
-        interface_ip: "{{container2_ip}}"
+        interface_ip: "{{item.container2_ip}}"
       with_items: "{{csv_file}}"
 
     # # Create veth pair for bridge and LC1
