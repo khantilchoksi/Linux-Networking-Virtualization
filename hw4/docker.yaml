@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    docker_image: ubuntu_netw
+    csv_file: 
+      - container1: cs10
+        container2: cs11
+        network_type: bridge
+
+  tasks:
+    - debug:
+         msg: "{{csv_file}}"
+
+    # Create container1
+    - name: Create and start container 1 if already not present
+      docker_container:
+        name: {{item.container1}}
+        image: {{docker_image}}
+        state: present
+        privileged: yes
+      with_items: csv_file
+
+    # Create container1
+    - name: Create and start container 2 if already not present
+      docker_container:
+        name: {{item.container2}}
+        image: {{docker_image}}
+        state: present
+        privileged: yes
+      with_items: csv_file
+
+    # Create Bridge inside hypervisor
+    - name: Create bridge in hypervisor
+      command: "echo {{item.container1}} {{item.container2}}"
+
+    
+    
