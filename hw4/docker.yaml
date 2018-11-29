@@ -52,7 +52,7 @@
 
     # Create Bridge inside hypervisor
     - name: Create bridge in hypervisor
-      command: "brctl addbr {{item.container1}}{{item.container2}}br"
+      command: "brctl addbr {{item.container1}}br"
       with_items: "{{csv_file}}"
       become: yes
     
@@ -61,7 +61,7 @@
       include_tasks: connect_container_bridge.yaml
       vars:
         container_name: lc1
-        bridge_name: "{{item.container1}}{{item.container2}}br"
+        bridge_name: "{{item.container1}}br"
         interface_ip: "{{lc1_ip}}"
       with_items: "{{csv_file}}"
 
@@ -70,7 +70,7 @@
       include_tasks: connect_container_bridge.yaml
       vars:
         container_name: "{{container1}}"
-        bridge_name: "{{item.container1}}{{item.container2}}br"
+        bridge_name: "{{item.container1}}br"
         interface_ip: "{{container1_ip}}"
       with_items: "{{csv_file}}"
 
@@ -79,7 +79,7 @@
       include_tasks: connect_container_bridge.yaml
       vars:
         container_name: "{{container2}}"
-        bridge_name: "{{item.container1}}{{item.container2}}br"
+        bridge_name: "{{item.container1}}br"
         interface_ip: "{{container2_ip}}"
       with_items: "{{csv_file}}"
 
