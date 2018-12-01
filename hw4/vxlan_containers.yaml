@@ -141,7 +141,7 @@
     
     # Connect LC1 with bridge
     - name: Connect LC1 with bridge
-      include_tasks: connect_container_l3.yaml
+      include_tasks: connect_container_vxlan.yaml
       vars:
         container_name: lc11
         bridge_name: "{{item.container1}}br"
@@ -151,7 +151,7 @@
 
     # Connect LC2 with bridge
     - name: Connect LC2 with bridge
-      include_tasks: connect_container_l3.yaml
+      include_tasks: connect_container_vxlan.yaml
       vars:
         container_name: lc2
         bridge_name: "{{item.container2}}br"
@@ -161,20 +161,22 @@
 
     # Connect Container1 with bridge
     - name: Connect Container1 with bridge
-      include_tasks: connect_container_bridge.yaml
+      include_tasks: connect_container_vxlan.yaml
       vars:
         container_name: "{{item.container1}}"
         bridge_name: "{{item.container1}}br"
         interface_ip: "{{item.container1_ip}}"
+        client: "true"
       with_items: "{{csv_file}}"
 
     # Connect Container2 with bridge
     - name: Connect Container2 with bridge
-      include_tasks: connect_container_bridge.yaml
+      include_tasks: connect_container_vxlan.yaml
       vars:
         container_name: "{{item.container2}}"
         bridge_name: "{{item.container2}}br"
         interface_ip: "{{item.container2_ip}}"
+        client: "true"
       with_items: "{{csv_file}}"
 
     # # Create veth pair for bridge and LC1

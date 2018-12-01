@@ -51,3 +51,21 @@
     command: "nsenter -t {{container_pid.stdout}} -n ip addr add {{interface_ip}} dev {{interface_prefix}}vif1"
     become: yes
     ignore_errors: true
+
+  # Assign ip to LC1 container interface
+  - name: Remove previous default route to default network
+    command: "nsenter -t {{container_pid.stdout}} -n ip route del default"
+    become: yes
+    when: 
+      - client is defined
+      - client == "true"
+    ignore_errors: true
+
+  # Assign ip to LC1 container interface
+  - name: Add  default route to new netowrk created
+    command: "nsenter -t {{container_pid.stdout}} -n ip route add 0.0.0.0/0 dev {{interface_prefix}}vif1"
+    become: yes
+    when: 
+      - client is defined
+      - client == "true"
+    ignore_errors: true
