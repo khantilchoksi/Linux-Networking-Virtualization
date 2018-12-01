@@ -6,12 +6,12 @@
        - docker
     docker_image: ubuntu_netw
     csv_file: 
-      - container1: cs10
-        container2: cs11
+      - container1: "{{container1_name}}"
+        container2: "{{container2_name}}"
         network_type: bridge
-        lc1_ip: 101.0.1.1/24
-        container1_ip: 101.0.1.2/24
-        container2_ip: 101.0.1.3/24
+        lc1_ip: "{{leafc1_ip}}"
+        container1_ip: "{{c1_ip}}"
+        container2_ip: "{{c2_ip}}"
 
   tasks:
     # Install required packages
