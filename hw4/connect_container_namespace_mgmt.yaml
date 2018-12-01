@@ -24,12 +24,12 @@
 
   # Make the brvif2 up
   - name: Make the nsvif2 up
-    command: "ip netns exec ifconfig {{namespace_ip}} {{interface_prefix}}vif2 up"
+    command: "ip netns exec d{{container_name}} ifconfig {{interface_prefix}}vif2 {{namespace_ip}} up"
     become: yes
 
   # Add default route in namespace
   - name: Make the nsvif2 up
-    command: "ip netns exec ip route add 0.0.0.0/0 via {{container_ip}} dev {{interface_prefix}}vif2"
+    command: "ip netns exec d{{container_name}} ip route add 0.0.0.0/0 via {{container_ip}} dev {{interface_prefix}}vif2"
     become: yes
 
   # Fetch container process ID

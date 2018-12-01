@@ -61,24 +61,28 @@
     - name: Create Namespace for container1 vxlan
       command: "ip netns add d{{item.container1}}"
       with_items: "{{csv_file}}"
+      ignore_errors: true
       become: yes
 
     # Create Namespace for container2 vxlan
     - name: Create Namespace for container2 vxlan
       command: "ip netns add d{{item.container2}}"
       with_items: "{{csv_file}}"
+      ignore_errors: true
       become: yes
     
     # Create Bridge inside namespace of container1
     - name: Create Bridge inside namespace of container1
       command: "ip netns exec d{{item.container1}} brctl addbr {{item.container1}}br"
       with_items: "{{csv_file}}"
+      ignore_errors: true
       become: yes
 
     # Create Bridge inside namespace of container2
     - name: Create Bridge inside namespace of container2
       command: "ip netns exec d{{item.container2}} brctl addbr {{item.container2}}br"
       with_items: "{{csv_file}}"
+      ignore_errors: true
       become: yes
 
     # Create management vethpair between leaf container1 and namespace
@@ -109,12 +113,14 @@
     - name: Connect  VXLAN for container1 namespace
       command: "ip netns exec d{{item.container1}} ip link add name vxlan0 type vxlan id 42 dev {{item.container1}}nsvif2 local {{item.lc11_ns_mgmt_ip}} remote {{item.lc2_ns_mgmt_ip}} dstport 4789"
       with_items: "{{csv_file}}"
+      ignore_errors: true
       become: yes
 
     # Make vxlan interface up for container 1 namespace
     - name: Make vxlan interface up for container 1 namespace
       command: "ip netns exec d{{item.container1}} ip link set dev vxlan0 up"
       with_items: "{{csv_file}}"
+      ignore_errors: true
       become: yes
 
     # Add vxlan to bridge container1 namespace
