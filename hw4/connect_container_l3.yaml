@@ -1,0 +1,60 @@
+---
+  # vars passed from parent playbook will be:
+  #   container_name: lc1
+  #   bridge_name: "{{item.container1}}{{item.container2}}br"
+  #   interface_ip: "{{lc1_ip}}"
+  #   other_leaf_subnet: "{{other_leaf_subnet}}"
+
+  # Set interface prefix
+  - name: Interface prefix
+    set_fact:
+      interface_prefix: "{{bridge_name}}{{container_name}}"
+
+  # Create veth pair for bridge and container
+  - name: Create veth pair for bridge and container
+    command: "ip link add {{interface_prefix}}vif1 type veth peer name {{interface_prefix}}vif2"
+    ignore_errors: true
+
+  # Attach brvif2 to bridge
+  - name: Attach brvif2 to bridge
+    command: "brctl addif {{bridge_name}} {{interface_prefix}}vif2"
+    become: yes
+    ignore_errors: true
+
+  # Make the bridge interface up
+  - name: Make the bridge interface up
+    command: "ifconfig {{bridge_name}} up"
+    become: yes
+
+  # Make the brvif2 up
+  - name: Make the brvif2 up
+    command: "ifconfig {{interface_prefix}}vif2 up"
+    become: yes
+
+  # Fetch container process ID
+  - name: Fetch container process ID
+    command: "docker inspect --format {%raw%}'{{.State.Pid}}'{%endraw%} {{container_name}}"
+    register: container_pid
+
+  # Attach vif1 to container
+  - name: Attach brvif1 to container
+    command: "ip link set netns {{container_pid.stdout}} dev {{interface_prefix}}vif1"
+    become: yes
+    ignore_errors: true
+
+  # Make the container interface running 
+  - name: Make the interface running 
+    command: "nsenter -t {{container_pid.stdout}} -n ip link set {{interface_prefix}}vif1 up"
+    become: yes
+
+  # Assign ip to LC1 container interface
+  - name: Attach brvif1 to container
+    command: "nsenter -t {{container_pid.stdout}} -n ip addr add {{interface_ip}} dev {{interface_prefix}}vif1"
+    become: yes
+    ignore_errors: true
+
+    # Assign ip to LC1 container interface
+  - name: Add route for L3
+    command: "nsenter -t {{container_pid.stdout}} -n ip route add {{other_leaf_subnet}} dev gretun1"
+    become: yes
+    ignore_errors: true
