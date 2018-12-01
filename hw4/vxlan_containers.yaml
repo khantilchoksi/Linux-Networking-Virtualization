@@ -6,19 +6,19 @@
        - docker
     docker_image: ubuntu_netw
     csv_file: 
-      - container1: cs14
-        container2: cs15
+      - container1: "{{container1_name}}"
+        container2: "{{container2_name}}"
         network_type: vxlan
-        lc1_ip: 101.0.4.1/24
-        lc2_ip: 101.0.5.1/24
-        container1_ip: 101.0.4.2/24
-        container1_netw: 101.0.4.0/24
-        container2_ip: 101.0.5.2/24
-        container2_netw: 101.0.5.0/24
-        lc11_mgmt_ip: 101.0.6.1/24
-        lc2_mgmt_ip: 101.0.7.1/24
-        lc11_ns_mgmt_ip: 101.0.6.2/24
-        lc2_ns_mgmt_ip: 101.0.7.2/24
+        lc1_ip: "{{leafc1_ip}}"
+        lc2_ip: "{{leafc2_ip}}"
+        container1_ip: "{{c1_ip}}"
+        container1_netw: "{{c1_netw}}"
+        container2_ip: "{{c2_ip}}"
+        container2_netw: "{{c2_netw}}"
+        lc11_mgmt_ip: "{{lc11_mgmt_ip}}"
+        lc2_mgmt_ip: "{{lc2_mgmt_ip}}"
+        lc11_ns_mgmt_ip: "{{lc11_ns_mgmt_ip}}"
+        lc2_ns_mgmt_ip: "{{lc2_ns_mgmt_ip}}"
         lc11_ns_mgmt_gate: 101.0.6.1
         lc2_ns_mgmt_gate: 101.0.7.1
 
@@ -107,6 +107,7 @@
         leaf_container_name: lc2
         container_name: "{{item.container2}}"
         container_ip: "{{item.lc2_mgmt_ip}}"
+        gateway: "{{item.lc2_ns_mgmt_gate}}"
         namespace_ip: "{{item.lc2_ns_mgmt_ip}}"
         other_leaf_subnet: "{{item.container1_netw}}"
       with_items: "{{csv_file}}"
