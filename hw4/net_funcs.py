@@ -49,11 +49,28 @@ def parse_csv(file_name):
 		if contype == "Bridge":
 			new_subnet = get_next_subnet()
 			ip_list = get_curr_ips()
-			command = 'sudo ansible-playbook bridge_containers.yaml \
-			--extra-vars "container1_name='+dev1+' leafc1_ip='+ip_list[0]+\
+			command = 'sudo ansible-playbook bridge_containers.yaml '+\
+			'--extra-vars "container1_name='+dev1+' container2_name='\
+			+dev2+' leafc1_ip='+ip_list[0]+\
 			' c1_ip='+ip_list[1]+' c2_ip='+ip_list[2]+'"'
-			print command
-			#os.system(command)
+			#print command
+			ret = os.system(command)
+			print ret
+		elif contype == "L3":
+			subnet_1 = get_next_subnet()
+			ip_list1 = get_curr_ips()
+			subnet_2 = get_next_subnet()
+			ip_list2 = get_curr_ips()
+
+			command = 'sudo ansible-playbook l3_containers.yaml '+\
+			'--extra-vars "container1_name='+dev1+' container2_name='\
+			+dev2+' leafc1_ip='+ip_list1[0]+' leafc2_ip='+ip_list2[0]+\
+			' c1_ip='+ip_list1[1]+' c2_ip='+ip_list2[1]+' c1_netw='+subnet_1+\
+			' c2_netw='+subnet_2+'"'
+			#print command
+			ret = os.system(command)
+			print ret
+
 		op_list.append((dev1.strip(),dev2.strip(), contype.strip()))
 		line = f.readline()
 
