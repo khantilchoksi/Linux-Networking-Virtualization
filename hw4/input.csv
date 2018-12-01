@@ -1,0 +1,5 @@
+Name src container, Name destination container, Network type
+CS21, CS22, Bridge
+CS1X, CS2X, VXLAN
+CSX, CSY, L3
+CSA, CSB, GRE
