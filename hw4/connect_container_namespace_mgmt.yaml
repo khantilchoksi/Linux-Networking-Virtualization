@@ -1,5 +1,6 @@
 ---
   # vars passed from parent playbook will be:
+  #   leaf_container_name: lc2
   #   container_name: cs15
   #   container_ip: "{{lc1_ip}}"
   #   namespace_ip: "{{ns_ip}}"
@@ -8,7 +9,7 @@
   # Set interface prefix
   - name: Interface prefix
     set_fact:
-      interface_prefix: "{{container_name}}ns"
+      interface_prefix: "{{leaf_container_name}}ns"
 
   # Create veth pair for ns and container
   - name: Create veth pair for namespace and container
@@ -33,7 +34,7 @@
 
   # Fetch container process ID
   - name: Fetch container process ID
-    command: "docker inspect --format {%raw%}'{{.State.Pid}}'{%endraw%} {{container_name}}"
+    command: "docker inspect --format {%raw%}'{{.State.Pid}}'{%endraw%} {{leaf_container_name}}"
     register: container_pid
 
   # Attach vif1 to container

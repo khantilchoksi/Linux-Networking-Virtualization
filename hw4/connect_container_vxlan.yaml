@@ -1,6 +1,6 @@
 ---
   # vars passed from parent playbook will be:
-  #   container_name: lc1
+  #   container_name: cs15
   #   bridge_name: "{{item.container1}}{{item.container2}}br"
   #   interface_ip: "{{lc1_ip}}"
 
