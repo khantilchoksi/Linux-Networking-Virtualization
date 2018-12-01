@@ -3,6 +3,8 @@
   #   leaf_container_name: lc2
   #   container_name: cs15
   #   container_ip: "{{lc1_ip}}"
+  #   gateway: 
+  # 
   #   namespace_ip: "{{ns_ip}}"
   #   other_leaf_subnet: "{{other_leaf_subnet}}"
 
@@ -33,8 +35,8 @@
     become: yes
 
   # Add default route in namespace
-  - name: Make the nsvif2 up
-    command: "ip netns exec d{{container_name}} ip route add 0.0.0.0/0 via {{container_ip}} dev {{interface_prefix}}vif2"
+  - name: Make the nsvif2 ip proute add
+    command: "ip netns exec d{{container_name}} ip route add 0.0.0.0/0 via {{gateway}} dev {{interface_prefix}}vif2"
     become: yes
 
   # Fetch container process ID

@@ -19,6 +19,8 @@
         lc2_mgmt_ip: 101.0.7.1/24
         lc11_ns_mgmt_ip: 101.0.6.2/24
         lc2_ns_mgmt_ip: 101.0.7.2/24
+        lc11_ns_mgmt_gate: 101.0.6.1
+        lc2_ns_mgmt_gate: 101.0.7.1
 
   tasks:
     # Install required packages
@@ -92,6 +94,7 @@
         leaf_container_name: lc11
         container_name: "{{item.container1}}"
         container_ip: "{{item.lc11_mgmt_ip}}"
+        gateway: "{{item.lc11_ns_mgmt_gate}}"
         namespace_ip: "{{item.lc11_ns_mgmt_ip}}"
         other_leaf_subnet: "{{item.container2_netw}}"
       with_items: "{{csv_file}}"
