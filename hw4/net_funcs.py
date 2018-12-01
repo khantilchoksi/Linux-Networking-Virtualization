@@ -38,17 +38,19 @@ def get_curr_ips():
 	left_part = oct1+"."+oct2+"."+oct3+"."
 	return left_part+"1"+subnet, left_part+"2"+subnet
 	
-def parse_csv(file_name):
+def main(file_name):
 	f = open(file_name,"r")
-	
+
 	line = f.readline()
-	print line	
+	print line
 	op_list = []
 	
 	while line:
 		print line
-		dev1, dev2, contype = line.split()
+		dev1, dev2, contype = (v for v in line.split())
 		print dev1, dev2, contype
-		#op_list.append((dev1.strip(),dev2.strip(), contype.strip()))
+		op_list.append((dev1.strip(),dev2.strip(), contype.strip()))
 		line = f.readline()
 	return iter(op_list)
+
+
