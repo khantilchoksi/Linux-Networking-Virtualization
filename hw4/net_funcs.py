@@ -1,4 +1,4 @@
-
+import os
 def get_next_subnet():
 	try:
 		f = open("ips.txt","r")
@@ -36,21 +36,26 @@ def get_curr_ips():
 	oct1, oct2, oct3, oct4 = (octect for octect in ip.split("."))
 	
 	left_part = oct1+"."+oct2+"."+oct3+"."
-	return left_part+"1"+subnet, left_part+"2"+subnet
+	return left_part+"1"+subnet, left_part+"2"+subnet, left_part+"3"+subnet
 	
-def main(file_name):
+def parse_csv(file_name):
 	f = open(file_name,"r")
 
 	line = f.readline()
-	print line
 	op_list = []
 	
 	while line:
-		print line
-		dev1, dev2, contype = (v for v in line.split())
-		print dev1, dev2, contype
+		dev1, dev2, contype = (v.strip() for v in line.split(","))
+		if contype == "Bridge":
+			new_subnet = get_next_subnet()
+			ip_list = get_curr_ips()
+			command = 'sudo ansible-playbook bridge_containers.yaml \
+			--extra-vars "container1_name='+dev1+' leafc1_ip='+ip_list[0]+\
+			' c1_ip='+ip_list[1]+' c2_ip='+ip_list[2]+'"'
+			print command
+			#os.system(command)
 		op_list.append((dev1.strip(),dev2.strip(), contype.strip()))
 		line = f.readline()
-	return iter(op_list)
+
 
 
