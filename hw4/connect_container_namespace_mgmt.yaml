@@ -24,7 +24,12 @@
 
   # Make the brvif2 up
   - name: Make the nsvif2 up
-    command: "ip netns exec d{{container_name}} ifconfig {{interface_prefix}}vif2 {{namespace_ip}} up"
+    command: "ip netns exec d{{container_name}} ip link set {{interface_prefix}}vif2 up"
+    become: yes
+
+  # Make the brvif2 up
+  - name: Make the nsvif2 addr vif2
+    command: "ip netns exec d{{container_name}} ip addr add {{namespace_ip}} dev {{interface_prefix}}vif2"
     become: yes
 
   # Add default route in namespace
