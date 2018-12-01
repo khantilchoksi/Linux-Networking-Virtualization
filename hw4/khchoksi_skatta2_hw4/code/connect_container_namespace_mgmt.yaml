@@ -1,0 +1,68 @@
+---
+  # vars passed from parent playbook will be:
+  #   leaf_container_name: lc2
+  #   container_name: cs15
+  #   container_ip: "{{lc1_ip}}"
+  #   gateway: 
+  # 
+  #   namespace_ip: "{{ns_ip}}"
+  #   other_leaf_subnet: "{{other_leaf_subnet}}"
+
+  # Set interface prefix
+  - name: Interface prefix
+    set_fact:
+      interface_prefix: "{{leaf_container_name}}ns"
+
+  # Create veth pair for ns and container
+  - name: Create veth pair for namespace and container
+    command: "ip link add {{interface_prefix}}vif1 type veth peer name {{interface_prefix}}vif2"
+    ignore_errors: true
+
+  # Attach nsvif2 to namespace
+  - name: Attach nsvif2 to namespace
+    command: "ip link set {{interface_prefix}}vif2 netns d{{container_name}}"
+    become: yes
+    ignore_errors: true
+
+  # Make the brvif2 up
+  - name: Make the nsvif2 up
+    command: "ip netns exec d{{container_name}} ip link set {{interface_prefix}}vif2 up"
+    become: yes
+
+  # Make the brvif2 up
+  - name: Make the nsvif2 addr vif2
+    command: "ip netns exec d{{container_name}} ip addr add {{namespace_ip}} dev {{interface_prefix}}vif2"
+    become: yes
+
+  # Add default route in namespace
+  - name: Make the nsvif2 ip proute add
+    command: "ip netns exec d{{container_name}} ip route add 0.0.0.0/0 via {{gateway}} dev {{interface_prefix}}vif2"
+    become: yes
+
+  # Fetch container process ID
+  - name: Fetch container process ID
+    command: "docker inspect --format {%raw%}'{{.State.Pid}}'{%endraw%} {{leaf_container_name}}"
+    register: container_pid
+
+  # Attach vif1 to container
+  - name: Attach nsvif1 to container
+    command: "ip link set netns {{container_pid.stdout}} dev {{interface_prefix}}vif1"
+    become: yes
+    ignore_errors: true
+
+  # Make the container interface running 
+  - name: Make the interface running 
+    command: "nsenter -t {{container_pid.stdout}} -n ip link set {{interface_prefix}}vif1 up"
+    become: yes
+
+ # Assign ip to LC1 container interface
+  - name: Attach brvif1 to container
+    command: "nsenter -t {{container_pid.stdout}} -n ip addr add {{container_ip}} dev {{interface_prefix}}vif1"
+    become: yes
+    ignore_errors: true
+
+  # Add route from vxlan interface to Gretun
+  - name: Add route from vxlan interface to Gretun
+    command: "nsenter -t {{container_pid.stdout}} -n ip route add {{other_leaf_subnet}} dev gretun1"
+    become: yes
+    ignore_errors: true

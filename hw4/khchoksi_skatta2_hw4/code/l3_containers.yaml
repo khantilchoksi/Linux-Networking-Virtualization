@@ -1,0 +1,153 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    packages:
+       - docker
+    docker_image: ubuntu_netw
+    csv_file: 
+      - container1: "{{container1_name}}"
+        container2: "{{container2_name}}"
+        network_type: l3
+        lc1_ip: "{{leafc1_ip}}"
+        lc2_ip: "{{leafc2_ip}}"
+        container1_ip: "{{c1_ip}}"
+        container1_netw: "{{c1_netw}}"
+        container2_ip: "{{c2_ip}}"
+        container2_netw: "{{c2_netw}}"
+
+  tasks:
+    # Install required packages
+    - name: Install required packages for docker
+      apt: 
+        name: "{{packages}}"
+      become: yes
+
+    - debug:
+         msg: "{{csv_file}}"
+
+    # Create docker image if not exists
+    - name: Create docker image if not exists
+      docker_image:
+        path: .
+        name: "{{docker_image}}"
+        state: present
+
+    # Create container1
+    - name: Create and start container 1 if already not present
+      docker_container:
+        name: "{{item.container1}}"
+        image: "{{docker_image}}"
+        state: started
+        privileged: yes
+        command: sleep infinity
+      with_items: "{{csv_file}}"
+
+    # Create container2
+    - name: Create and start container 2 if already not present
+      docker_container:
+        name: "{{item.container2}}"
+        image: "{{docker_image}}"
+        state: started
+        privileged: yes
+        command: sleep infinity
+      with_items: "{{csv_file}}"
+
+    # Create Bridge inside hypervisor
+    - name: Create bridge in hypervisor
+      command: "brctl addbr {{item.container1}}br"
+      with_items: "{{csv_file}}"
+      become: yes
+    
+    # Create Bridge inside hypervisor
+    - name: Create bridge for network2 in hypervisor
+      command: "brctl addbr {{item.container2}}br"
+      with_items: "{{csv_file}}"
+      become: yes
+    
+    # Connect LC1 with bridge
+    - name: Connect LC1 with bridge
+      include_tasks: connect_container_l3.yaml
+      vars:
+        container_name: lc11
+        bridge_name: "{{item.container1}}br"
+        interface_ip: "{{item.lc1_ip}}"
+        other_leaf_subnet: "{{item.container2_netw}}"
+      with_items: "{{csv_file}}"
+
+    # Connect LC2 with bridge
+    - name: Connect LC2 with bridge
+      include_tasks: connect_container_l3.yaml
+      vars:
+        container_name: lc2
+        bridge_name: "{{item.container2}}br"
+        interface_ip: "{{item.lc2_ip}}"
+        other_leaf_subnet: "{{item.container1_netw}}"
+      with_items: "{{csv_file}}"
+
+    # Connect Container1 with bridge
+    - name: Connect Container1 with bridge
+      include_tasks: connect_container_bridge.yaml
+      vars:
+        container_name: "{{item.container1}}"
+        bridge_name: "{{item.container1}}br"
+        interface_ip: "{{item.container1_ip}}"
+        client: "true"
+      with_items: "{{csv_file}}"
+
+    # Connect Container2 with bridge
+    - name: Connect Container2 with bridge
+      include_tasks: connect_container_bridge.yaml
+      vars:
+        container_name: "{{item.container2}}"
+        bridge_name: "{{item.container2}}br"
+        interface_ip: "{{item.container2_ip}}"
+        client: "true"
+      with_items: "{{csv_file}}"
+
+    # # Create veth pair for bridge and LC1
+    # - name: Create veth pair for bridge and LC1
+    #   command: "ip link add {{item.container1}}{{item.container2}}brvif1 type veth peer name {{item.container1}}{{item.container2}}brvif2"
+    #   with_items: "{{csv_file}}"
+
+    # # Attach brvif2 to bridge
+    # - name: Attach brvif2 to bridge
+    #   command: "brctl addif {{item.container1}}{{item.container2}}br {{item.container1}}{{item.container2}}brvif2"
+    #   become: yes
+
+    # # Make the bridge interface up
+    # - name: Make the bridge interface up
+    #   command: "ifconfig {{item.container1}}{{item.container2}}br up"
+    #   become: yes
+
+    # # Make the brvif2 up
+    # - name: Make the brvif2 up
+    #   command: "ifconfig {{item.container1}}{{item.container2}}brvif2 up"
+    #   become: yes
+
+    # # Fetch LC1 process ID
+    # - name: Fetch LC1 process ID
+    #   command: docker inspect --format '{{.State.Pid}}' lc11
+    #   register: lc1_pid
+
+    # # Attach brvif1 to container
+    # - name: Attach brvif1 to container
+    #   command: "ip link set netns {{lc1_pid}} dev {{item.container1}}{{item.container2}}brvif1"
+    #   become: yes
+    #   with_items: "{{csv_file}}"
+
+    # # Make the container interface running 
+    # - name: Make the interface running 
+    #   command: "nsenter -t {{lc1_pid}} -n ip link set {{item.container1}}{{item.container2}}brvif1 up"
+    #   become: yes
+    #   with_items: "{{csv_file}}"
+
+    # # Assign ip to LC1 container interface
+    # - name: Attach brvif1 to container
+    #   command: "udo nsenter -t {{lc1_pid}} -n ip addr add {{item.lc1_ip}} dev {{item.container1}}{{item.container2}}brvif1"
+    #   become: yes
+    #   with_items: "{{csv_file}}"
+
+
+    
+    
