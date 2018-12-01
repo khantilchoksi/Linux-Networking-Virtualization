@@ -6,15 +6,15 @@
        - docker
     docker_image: ubuntu_netw
     csv_file: 
-      - container1: cs12
-        container2: cs13
+      - container1: "{{container1_name}}"
+        container2: "{{container2_name}}"
         network_type: l3
-        lc1_ip: 101.0.2.1/24
-        lc2_ip: 101.0.3.1/24
-        container1_ip: 101.0.2.2/24
-        container1_netw: 101.0.2.0/24
-        container2_ip: 101.0.3.2/24
-        container2_netw: 101.0.3.0/24
+        lc1_ip: "{{leafc1_ip}}"
+        lc2_ip: "{{leafc2_ip}}"
+        container1_ip: "{{c1_ip}}"
+        container1_netw: "{{c1_netw}}"
+        container2_ip: "{{c2_ip}}"
+        container2_netw: "{{c2_netw}}"
 
   tasks:
     # Install required packages
@@ -92,6 +92,7 @@
         container_name: "{{item.container1}}"
         bridge_name: "{{item.container1}}br"
         interface_ip: "{{item.container1_ip}}"
+        client: "true"
       with_items: "{{csv_file}}"
 
     # Connect Container2 with bridge
@@ -101,6 +102,7 @@
         container_name: "{{item.container2}}"
         bridge_name: "{{item.container2}}br"
         interface_ip: "{{item.container2_ip}}"
+        client: "true"
       with_items: "{{csv_file}}"
 
     # # Create veth pair for bridge and LC1
