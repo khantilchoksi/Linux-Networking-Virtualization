@@ -56,7 +56,7 @@ def parse_csv(file_name):
 			#print command
 			ret = os.system(command)
 			print ret
-		elif contype == "L3":
+		elif contype == "L3" or contype == "GRE":
 			subnet_1 = get_next_subnet()
 			ip_list1 = get_curr_ips()
 			subnet_2 = get_next_subnet()
@@ -70,8 +70,41 @@ def parse_csv(file_name):
 			#print command
 			ret = os.system(command)
 			print ret
+		elif contype == "VXLAN":
+			lc1_subnet = get_next_subnet()
+			lc1_ip_list = get_curr_ips()
+			lc2_subnet = get_next_subnet()
+			lc2_ip_list = get_curr_ips()
+		
+			lc11_ns_mgmt_netw = get_next_subnet()
+			lc11_ns_mgmt_netw_list = get_curr_ips()
+			
+			lc2_ns_mgmt_netw = get_next_subnet()
+			lc2_ns_mgmt_netw_list = get_curr_ips()
 
-		op_list.append((dev1.strip(),dev2.strip(), contype.strip()))
+			lc1_ip = lc1_ip_list[0]
+			lc2_ip = lc2_ip_list[0]
+			container1_ip = lc1_ip_list[1]
+			container1_netw = lc1_subnet
+			container2_ip = lc2_ip_list[1]
+			container2_netw = lc2_subnet
+
+			lc11_mgmt_ip = lc11_ns_mgmt_netw_list[0]
+			lc2_mgmt_ip = lc2_ns_mgmt_netw_list[0]
+			
+			lc11_ns_mgmt_ip = lc11_ns_mgmt_netw_list[1]
+			lc2_ns_mgmt_ip = lc2_ns_mgmt_netw_list[1]
+			
+			command = 'sudo ansible-playbook vxlan_containers.yaml '+\
+			'--extra-vars "container1_name='+dev1+' container2_name='\
+			+dev2+' leafc1_ip='+lc1_ip[0]+' leafc2_ip='+lc2_ip[0]+\
+			' c1_ip='+container1_ip+' c2_ip='+container2_ip+' c1_netw='+container1_netw+\
+			' c2_netw='+container2_netw+' lc11_mgmt_ip='+lc11_mgmt_ip+' lc2_mgmt_ip='+lc2_mgmt_ip+\
+			' lc11_ns_mgmt_ip='+lc11_ns_mgmt_ip+' lc2_ns_mgmt_ip='+lc2_ns_mgmt_ip+
+			'\"'
+			
+			ret = os.system(command)
+			print ret
 		line = f.readline()
 
 
