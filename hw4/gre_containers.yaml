@@ -6,19 +6,15 @@
        - docker
     docker_image: ubuntu_netw
     csv_file: 
-      - container1: cs14
-        container2: cs15
-        network_type: vxlan
-        lc1_ip: 101.0.4.1/24
-        lc2_ip: 101.0.5.1/24
-        container1_ip: 101.0.4.2/24
-        container1_netw: 101.0.4.0/24
-        container2_ip: 101.0.5.2/24
-        container2_netw: 101.0.5.0/24
-        lc11_mgmt_ip: 101.0.6.1/24
-        lc2_mgmt_ip: 101.0.7.1/24
-        lc11_ns_mgmt_ip: 101.0.6.2/24
-        lc2_ns_mgmt_ip: 101.0.7.2/24
+      - container1: "{{container1_name}}"
+        container2: "{{container2_name}}"
+        network_type: l3
+        lc1_ip: "{{leafc1_ip}}"
+        lc2_ip: "{{leafc2_ip}}"
+        container1_ip: "{{c1_ip}}"
+        container1_netw: "{{c1_netw}}"
+        container2_ip: "{{c2_ip}}"
+        container2_netw: "{{c2_netw}}"
 
   tasks:
     # Install required packages
@@ -57,93 +53,21 @@
         command: sleep infinity
       with_items: "{{csv_file}}"
 
-    # Create Namespace for container1 vxlan
-    - name: Create Namespace for container1 vxlan
-      command: "ip netns add d{{item.container1}}"
-      with_items: "{{csv_file}}"
-      become: yes
-
-    # Create Namespace for container2 vxlan
-    - name: Create Namespace for container2 vxlan
-      command: "ip netns add d{{item.container2}}"
+    # Create Bridge inside hypervisor
+    - name: Create bridge in hypervisor
+      command: "brctl addbr {{item.container1}}br"
       with_items: "{{csv_file}}"
       become: yes
     
-    # Create Bridge inside namespace of container1
-    - name: Create Bridge inside namespace of container1
-      command: "ip netns exec d{{item.container1}} brctl addbr {{item.container1}}br"
-      with_items: "{{csv_file}}"
-      become: yes
-
-    # Create Bridge inside namespace of container2
-    - name: Create Bridge inside namespace of container2
-      command: "ip netns exec d{{item.container2}} brctl addbr {{item.container2}}br"
-      with_items: "{{csv_file}}"
-      become: yes
-
-    # Create management vethpair between leaf container1 and namespace
-    - name: Create management vethpair between leaf container and namespace
-      include_tasks: connect_container_namespace_mgmt.yaml
-      vars:
-        leaf_container_name: lc11
-        container_name: "{{item.container1}}"
-        container_ip: "{{item.lc11_mgmt_ip}}"
-        namespace_ip: "{{item.lc11_ns_mgmt_ip}}"
-        other_leaf_subnet: "{{item.container2_netw}}"
-      with_items: "{{csv_file}}"
-      become: yes
-    
-    # Create management vethpair between leaf container2 and namespace
-    - name: Create management vethpair between leaf container2 and namespace
-      include_tasks: connect_container_namespace_mgmt.yaml
-      vars:
-        leaf_container_name: lc2
-        container_name: "{{item.container2}}"
-        container_ip: "{{item.lc2_mgmt_ip}}"
-        namespace_ip: "{{item.lc2_ns_mgmt_ip}}"
-        other_leaf_subnet: "{{item.container1_netw}}"
-      with_items: "{{csv_file}}"
-      become: yes
-  
-    # Connect VXLAN
-    - name: Connect  VXLAN for container1 namespace
-      command: "ip netns exec d{{item.container1}} ip link add name vxlan0 type vxlan id 42 dev {{item.container1}}nsvif2 local {{item.lc11_ns_mgmt_ip}} remote {{item.lc2_ns_mgmt_ip}} dstport 4789"
-      with_items: "{{csv_file}}"
-      become: yes
-
-    # Make vxlan interface up for container 1 namespace
-    - name: Make vxlan interface up for container 1 namespace
-      command: "ip netns exec d{{item.container1}} ip link set dev vxlan0 up"
-      with_items: "{{csv_file}}"
-      become: yes
-
-    # Add vxlan to bridge container1 namespace
-    - name: Add vxlan to bridge container1 namespace
-      command: "ip netns exec d{{item.container1}} brctl addif {{item.container1}}br vxlan0"
-      with_items: "{{csv_file}}"
-      become: yes
-    
-    # Connect VXLAN
-    - name: Connect  VXLAN for container2 namespace
-      command: "ip netns exec ip d{{item.container2}} link add name vxlan0 type vxlan id 42 dev {{item.container2}}nsvif2 local {{item.lc2_ns_mgmt_ip}} remote {{item.lc11_ns_mgmt_ip}} dstport 4789"
-      with_items: "{{csv_file}}"
-      become: yes
-
-    # Make vxlan interface up for container 2 namespace
-    - name: Make vxlan interface up for container 2 namespace
-      command: "ip netns exec d{{item.container2}} ip link set dev vxlan0 up"
-      with_items: "{{csv_file}}"
-      become: yes
-    
-    # Add vxlan to bridge container2 namespace
-    - name: Add vxlan to bridge container2 namespace
-      command: "ip netns exec d{{item.container2}} brctl addif {{item.container2}}br vxlan0"
+    # Create Bridge inside hypervisor
+    - name: Create bridge for network2 in hypervisor
+      command: "brctl addbr {{item.container2}}br"
       with_items: "{{csv_file}}"
       become: yes
     
     # Connect LC1 with bridge
     - name: Connect LC1 with bridge
-      include_tasks: connect_container_vxlan.yaml
+      include_tasks: connect_container_l3.yaml
       vars:
         container_name: lc11
         bridge_name: "{{item.container1}}br"
@@ -153,7 +77,7 @@
 
     # Connect LC2 with bridge
     - name: Connect LC2 with bridge
-      include_tasks: connect_container_vxlan.yaml
+      include_tasks: connect_container_l3.yaml
       vars:
         container_name: lc2
         bridge_name: "{{item.container2}}br"
@@ -163,7 +87,7 @@
 
     # Connect Container1 with bridge
     - name: Connect Container1 with bridge
-      include_tasks: connect_container_vxlan.yaml
+      include_tasks: connect_container_bridge.yaml
       vars:
         container_name: "{{item.container1}}"
         bridge_name: "{{item.container1}}br"
@@ -173,7 +97,7 @@
 
     # Connect Container2 with bridge
     - name: Connect Container2 with bridge
-      include_tasks: connect_container_vxlan.yaml
+      include_tasks: connect_container_bridge.yaml
       vars:
         container_name: "{{item.container2}}"
         bridge_name: "{{item.container2}}br"
