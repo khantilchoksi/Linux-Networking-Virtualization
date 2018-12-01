@@ -1,0 +1,9 @@
+Fn  setsockopt  was called  2  times with duration of  0.000233
+Fn  NONE  was called  0  times with duration of  0.0
+Fn  socket  was called  1  times with duration of  0.000147
+Fn  bind  was called  1  times with duration of  0.000109
+Fn  accept  was called  2  times with duration of  0.043109
+Fn  getsockname  was called  3  times with duration of  1.000761
+Fn  getpeername  was called  2  times with duration of  0.000292
+Fn  listen  was called  1  times with duration of  0
+Fn  getsockopt  was called  11  times with duration of  9.134872

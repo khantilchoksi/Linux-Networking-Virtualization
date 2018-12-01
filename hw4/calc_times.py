@@ -16,3 +16,4 @@ while c:
 
 for fn_name in fn_map:
         print "Fn ",fn_name," was called ",fn_map[fn_name][1]," times with duration of ",fn_map[fn_name][0]
+
